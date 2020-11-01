@@ -39,74 +39,94 @@ class Processor(Process):
         self.in_q = Queue()
         self.out_q = Queue()
     
+    def process(self, line_split):
+        command, identifier, im_file = line_split[:3]
+
+        im_file = path.relpath(im_file)
+        cmd.process_file(self.evaluate, im_file)
+
+        return ">>{}$process${}".format(identifier, im_file)
+    
+    def index(self, line_split):
+        command, identifier, im_file = line_split[:3]
+        im_file = path.relpath(im_file)
+        indexed = cmd.index_file(self.es, im_file)
+
+        return ">>{}$index${}".format(identifier, 1 if indexed else 0)
+    
+    def search(self, line_split):
+        command, identifier, im_file = line_split[:3]
+
+        perf = Performance(False)
+
+        im_bytes = base64.b64decode(im_file)
+
+        search_page = 0
+        try:
+            search_page = line_split[4]
+        except IndexError as e:
+            pass
+        
+        res = cmd.search(perf, self.es, self.evaluate, im_bytes, int(search_page))
+
+        if res:
+            hits, palettes, w_dists, palette, query_tags, rating = res
+
+            zipped = list(zip(hits, palettes, w_dists))
+            processed = data_process(zipped)
+
+            out_path = "out/{}.png".format(identifier)
+
+            should_plot = True
+
+            try:
+                if line_split[3] == "0":
+                    should_plot = False
+            except IndexError as e:
+                pass
+
+            if should_plot:
+                perf.begin_section("plotting")
+                plotting.plot(im_bytes, res, out_path)
+                perf.end_section("plotting")
+            
+            out_dict = {
+                "palette": palette.tolist(),
+                "query_tags": query_tags,
+                "query_rating": rating[0],
+                "results": processed,
+                "performance": perf.gen_report()
+            }
+
+            out_json = json.dumps(out_dict)
+
+            send_path = path.abspath(out_path) if should_plot else "*"
+
+            return ">>{}$search${}${}".format(identifier, out_json, send_path)
+        else:
+            return ">>{}$search$failed".format(identifier)
+    
     def run(self):
         import utils.dan as dan
         from elasticsearch import Elasticsearch
         
-        evaluate = dan.setup_dan(project_dir)
+        self.evaluate = dan.setup_dan(project_dir)
 
-        es = Elasticsearch()
-        cmd.setup_elastic(es, False)
+        self.es = Elasticsearch()
+        cmd.setup_elastic(self.es, False)
 
         while True:
             identity, line = self.in_q.get()
             line_split = line.split("$")
             command, identifier, im_file = line_split[:3]
 
+            result = None
+
             if command == "process":
-                im_file = path.relpath(im_file)
-                cmd.process_file(evaluate, im_file)
-                self.out_q.put([identity, ">>{}$process${}".format(identifier, im_file)])
+                result = self.process(line_split)
             elif command == "index":
-                im_file = path.relpath(im_file)
-                indexed = cmd.index_file(es, im_file)
-                self.out_q.put([identity, ">>{}$index${}".format(identifier, 1 if indexed else 0)])
+                result = self.index(line_split)
             elif command == "search":
-                perf = Performance(False)
-
-                im_bytes = base64.b64decode(im_file)
-
-                search_page = 0
-                try:
-                    search_page = line_split[4]
-                except IndexError as e:
-                    pass
-                
-                res = cmd.search(perf, es, evaluate, im_bytes, int(search_page))
-
-                if not res:
-                    self.out_q.put([identity, ">>{}$search$failed".format(identifier)])
-                else:
-                    hits, palettes, w_dists, palette, query_tags, rating = res
-
-                    zipped = list(zip(hits, palettes, w_dists))
-                    processed = data_process(zipped)
-
-                    out_path = "out/{}.png".format(identifier)
-
-                    should_plot = True
-
-                    try:
-                        if line_split[3] == "0":
-                            should_plot = False
-                    except IndexError as e:
-                        pass
-
-                    if should_plot:
-                        perf.begin_section("plotting")
-                        plotting.plot(im_bytes, res, out_path)
-                        perf.end_section("plotting")
-                    
-                    out_dict = {
-                        "palette": palette.tolist(),
-                        "query_tags": query_tags,
-                        "query_rating": rating[0],
-                        "results": processed,
-                        "performance": perf.gen_report()
-                    }
-
-                    out_json = json.dumps(out_dict)
-
-                    send_path = path.abspath(out_path) if should_plot else "*"
-
-                    self.out_q.put([identity, ">>{}$search${}${}".format(identifier, out_json, send_path)])
+                result = self.search(line_split)
+            
+            self.out_q.put([identity, result])
