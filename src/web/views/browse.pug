@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        title Browse
+
+        link(rel="stylesheet" href="common.css")
+    body
+        include mixins/display
+
+        .pagelink: a(href="/") < Back to home
+
+        each result in results
+            +display(null, result)
+        
+        hr
+
+        ul(style="list-style-type: none; padding: 0;")
+            if prev
+                li.pagelink: a(href="?before=" + prev) Previous
+            
+            if next
+                li.pagelink: a(href="?after=" + next) Next
+        
+        include partials/tippy

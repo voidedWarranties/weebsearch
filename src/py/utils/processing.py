@@ -10,8 +10,8 @@ import string
 
 # generate a random string
 def rand_id(n=16):
-    s = string.ascii_letters + string.digits
-    return ''.join(random.choice(s) for _ in range(n))
+    s = string.digits
+    return int(''.join(random.choice(s) for _ in range(n)))
 
 # elasticsearch hit to output format
 def hit_process(hit):

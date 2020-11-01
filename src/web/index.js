@@ -71,6 +71,12 @@ function resultUrl(file, page) {
     return `/search-results?file=${file}&page=${page}`;
 }
 
+function processHits(hits) {
+    for (const result of hits) {
+        result.path = "/" + result.path.replace(/\\/g, "/");
+    }
+}
+
 const pageLength = 24;
 
 app.get("/search-results", (req, res) => {
@@ -95,9 +101,7 @@ app.get("/search-results", (req, res) => {
 
             const outObj = JSON.parse(output[1]);
 
-            for (const result of outObj.results) {
-                result.path = "/" + result.path.replace(/\\/g, "/");
-            }
+            processHits(outObj.results);
 
             const startRank = (page || 0) * pageLength + 1;
 
@@ -115,6 +119,70 @@ app.get("/search-results", (req, res) => {
         }
     });
 });
+
+function searchFrom(hit) {
+    return [new Date(hit.timestamp).getTime(), hit.id];
+}
+
+function searchFromString(hit) {
+    return searchFrom(hit).join("-");
+}
+
+function searchAfterQuery(reverse, search_after) {
+    const opts = {
+        index: "anime",
+        body: {
+            size: 24,
+            query: {
+                match_all: {}
+            },
+            sort: [
+                { timestamp: reverse ? "asc" : "desc" },
+                { id: reverse ? "desc" : "asc" }
+            ]
+        }
+    };
+
+    if (search_after) {
+        opts.body.search_after = search_after;
+    }
+
+    return opts;
+}
+
+app.get("/browse", (req, res) => {
+    const { after, before } = req.query;
+
+    const after_raw = after || before;
+    const search_after = after_raw ? after_raw.split("-") : null;
+    if (search_after) search_after[0] = parseInt(search_after[0]);
+
+    const reverse = before ? true : false;
+
+    const es_opts = searchAfterQuery(reverse, search_after);
+
+    if (search_after) es_opts.body.search_after = search_after;
+
+    es.search(es_opts).then(async r => {
+        if (reverse) r.body.hits.hits = r.body.hits.hits.reverse();
+        const hits = r.body.hits.hits.map(h => h._source);
+        processHits(hits);
+        
+        if (hits.length < 1) return res.status(204);
+
+        const firstHit = hits[0];
+        const lastHit = hits[hits.length - 1];
+
+        const beforeQuery = await es.search(searchAfterQuery(true, searchFrom(firstHit)));
+        const afterQuery = await es.search(searchAfterQuery(false, searchFrom(lastHit)));
+
+        res.render("browse", {
+            results: hits,
+            prev: beforeQuery.body.hits.hits.length > 0 ? searchFromString(firstHit) : null,
+            next: afterQuery.body.hits.hits.length > 0 ? searchFromString(lastHit) : null
+        });
+    });
+})
 
 app.get("/counter/:number", (req, res) => {
     res.contentType("image/svg+xml");

@@ -13,9 +13,31 @@ html(lang="en")
                 background-color: darkgray;
                 padding: 50px 100px;
             }
+
+            .navlink {
+                display: inline;
+                padding: 0 5px;
+            }
+
+            .navlink a {
+                color: white;
+                text-decoration: none;
+            }
+
+            .navlink a:visited {
+                color: white;
+            }
+
+            .navlink a:hover {
+                color: lightgray;
+                text-decoration: underline;
+            }
     body
         .center
-            h1 weebsearch
+            h1(style="margin: 0;") weebsearch
+            ul(style="list-style-type: none; padding: 0;")
+                li.navlink: a(href="/browse") Browse
+            
             form(action="/search-image" method="POST" enctype="multipart/form-data" name="search-form")
                 label(for="query")
                     #upload(style="border: 3px dashed white;")

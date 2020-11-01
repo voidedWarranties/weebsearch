@@ -21,3 +21,29 @@ body {
     transform: translate(-50%, -50%);
     text-align: center;
 }
+
+.pagelink a {
+    color: black;
+    text-decoration: none;
+    background-color: lightgray;
+    padding: 10px 5px;
+}
+
+.pagelink a:visited {
+    color: black;
+}
+
+.pagelink {
+    margin: 21px 0;
+}
+
+.num-label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: black;
+    padding: 8px 5px;
+    border-radius: 3px;
+    margin: 0;
+    line-height: 20px;
+}

@@ -1,18 +1,3 @@
-mixin display(idx, result)
-    div(style="display: inline-block; position: relative;")
-        h1.num-label= idx + startRank
-        a(href=result.path target="_blank")
-            img.has-tooltip(src=result.path + "?w=240" data-id=result.id height="200px" style="border: 2px solid black;")
-        div(id=result.id style="display: none;")
-            b= result.path
-            p <b>ID:</b> #{result.id}
-            p <b>Color distance:</b> #{Math.floor(result.dist * 1000) / 1000}
-            p <b>Elasticsearch score:</b> #{Math.floor(result.score * 1000) / 1000}
-            p <b>Weighted score:</b> #{Math.floor(result.w_score * 1000) / 1000}
-            b Tags:
-            p= result.tags[0]
-            p= result.tags.slice(1).join(", ")
-
 <!DOCTYPE html>
 html(lang="en")
     head
@@ -21,37 +6,10 @@ html(lang="en")
         title weebsearch
 
         link(rel="stylesheet" href="common.css")
-        script(src="https://unpkg.com/@popperjs/core@2/dist/umd/popper.min.js")
-        script(src="https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.js")
-
-        style.
-            .num-label {
-                position: absolute;
-                top: 10px;
-                left: 10px;
-                background-color: black;
-                padding: 8px 5px;
-                border-radius: 3px;
-                margin: 0;
-                line-height: 20px;
-            }
-
-            .pagelink {
-                color: black;
-                text-decoration: none;
-                background-color: lightgray;
-                padding: 10px 5px;
-            }
-
-            .pagelink:visited {
-                color: black;
-            }
-
-            .pagelist {
-                margin: 21px 0;
-            }
     body
-        a.pagelink(href="/") < Back to home
+        include mixins/display
+
+        .pagelink: a(href="/") < Back to home
         div(style="position: relative;")
             h1.num-label Query
             img.has-tooltip(src=query width="10%" data-id="query" style="display: block;")
@@ -68,20 +26,9 @@ html(lang="en")
 
         ul(style="list-style-type: none; padding: 0;")
             if page - 1 >= 0
-                li.pagelist: a.pagelink(href=resultUrl(file, page - 1)) Previous Page
+                li.pagelink: a(href=resultUrl(file, page - 1)) Previous Page
         
             if page + 1 <= maxPage
-                li.pagelist: a.pagelink(href=resultUrl(file, page + 1)) Next Page
+                li.pagelink: a(href=resultUrl(file, page + 1)) Next Page
         
-        script.
-            tippy(".has-tooltip", {
-                content(reference) {
-                    const id = reference.getAttribute("data-id");
-                    return document.getElementById(id).innerHTML;
-                },
-                allowHTML: true,
-                placement: "auto",
-                interactive: true,
-                appendTo: () => document.body
-            });
-
+        include partials/tippy

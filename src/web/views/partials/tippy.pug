@@ -1,0 +1,11 @@
+script.
+    tippy(".has-tooltip", {
+        content(reference) {
+            const id = reference.getAttribute("data-id");
+            return document.getElementById(id).innerHTML;
+        },
+        allowHTML: true,
+        placement: "auto",
+        interactive: true,
+        appendTo: () => document.body
+    });

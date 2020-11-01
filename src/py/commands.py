@@ -104,6 +104,9 @@ def setup_elastic(es, clear):
                 "path": {
                     "type": "text",
                     "analyzer": "keyword"
+                },
+                "id": {
+                    "type": "long"
                 }
             }
         }
