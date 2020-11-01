@@ -13,8 +13,7 @@ def search(perf, es, evaluate, im_path, search_page=0):
         cv_img = cv.imread(im_path)
         tf_img = im_path
     else:
-        np_raw = np.frombuffer(im_path, dtype="uint8")
-        cv_img = cv.imdecode(np_raw, cv.IMREAD_COLOR)
+        cv_img = utils.bytes_to_mat(im_path)
         tf_img = six.BytesIO(im_path)
     
     perf.begin_section("query image processing")
@@ -27,7 +26,6 @@ def search(perf, es, evaluate, im_path, search_page=0):
     perf.end_section("query tag processing")
 
     perf.begin_section("elasticsearch")
-
     page_size = 24
     search_from = 0
     if search_page != 0:
@@ -53,23 +51,9 @@ def search(perf, es, evaluate, im_path, search_page=0):
 
     hits = list(map(utils.hit_process, hits))
 
-    palettes = []
-    
-    for hit in hits:
-        palette_path, _ = utils.get_paths(hit["path"])
-
-        if path.exists(palette_path):
-            palettes.append(np.load(palette_path))
-    
     perf.begin_section("color matching")
-    dists = utils.distances(palette, palettes)
-    w_dists = utils.weight(dists)
-    sort = np.argsort(w_dists)
+    hits, palettes, w_dists = utils.color_sort(hits, palette)
     perf.end_section("color matching")
-
-    hits = np.array(hits)[sort]
-    palettes = np.array(palettes)[sort]
-    w_dists = w_dists[sort]
 
     return hits, palettes, w_dists, palette, query_tags, rating
 

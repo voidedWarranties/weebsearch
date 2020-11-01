@@ -8,6 +8,32 @@ from os import path
 import math
 import matplotlib.pyplot as plt
 
+def color_sort(hits, palette):
+    palettes = []
+    
+    for hit in hits:
+        palette_path, _ = get_paths(hit["path"])
+
+        if path.exists(palette_path):
+            palettes.append(np.load(palette_path))
+    
+    dists = distances(palette, palettes)
+    w_dists = weight(dists)
+    sort = np.argsort(w_dists)
+
+    hits = np.array(hits)[sort]
+    palettes = np.array(palettes)[sort]
+    w_dists = w_dists[sort]
+
+    return hits, palettes, w_dists
+
+# convert bytes (usu. from base64) to an opencv image
+def bytes_to_mat(data):
+    np_raw = np.frombuffer(data, dtype="uint8")
+    cv_img = cv.imdecode(np_raw, cv.IMREAD_COLOR)
+
+    return cv_img
+
 # convert array of tags to multiline string
 def multiline(arr, line_len = 30):
     lines = []
@@ -29,15 +55,16 @@ def press(e):
     if e.key == "escape":
         plt.close("all")
 
+# create dir if it doesn't exist
 def ensure_dir(dir_path):
     if not path.exists(dir_path):
         os.makedirs(dir_path)
 
+# plot results from cmd.search
 def plot(im_path, res, save_loc=None):
     cv_img = None
     if not isinstance(im_path, str):
-        np_raw = np.frombuffer(im_path, dtype="uint8")
-        cv_img = cv.imdecode(np_raw, cv.IMREAD_COLOR)
+        cv_img = utils.bytes_to_mat(im_path)
     else:
         cv_img = cv.imread(im_path)
     

@@ -6,6 +6,8 @@ from performance import Performance
 from os import path
 import zmq
 import base64
+import commands as cmd
+import utils
 
 project_dir = "dan-model"
 
@@ -39,8 +41,6 @@ class Processor(Process):
         self.out_q = Queue()
     
     def run(self):
-        import commands as cmd
-        import utils
         import dan_utils
         from elasticsearch import Elasticsearch
         

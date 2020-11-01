@@ -1,0 +1,2 @@
+[![CodeFactor](https://www.codefactor.io/repository/github/voidedwarranties/weebsearch/badge/master)](https://www.codefactor.io/repository/github/voidedwarranties/weebsearch/overview/master)
+[![Maintainability](https://api.codeclimate.com/v1/badges/ba89317f79a709272563/maintainability)](https://codeclimate.com/github/voidedWarranties/weebsearch/maintainability)
