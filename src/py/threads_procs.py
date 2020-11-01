@@ -103,8 +103,8 @@ class Processor(Process):
             send_path = path.abspath(out_path) if should_plot else "*"
 
             return ">>{}$search${}${}".format(identifier, out_json, send_path)
-        else:
-            return ">>{}$search$failed".format(identifier)
+        
+        return ">>{}$search$failed".format(identifier)
     
     def run(self):
         import utils.dan as dan

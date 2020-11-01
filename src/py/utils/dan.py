@@ -11,7 +11,7 @@ def setup_dan(project_dir):
     gpus = tf.config.list_physical_devices("GPU")
     try:
         tf.config.experimental.set_memory_growth(gpus[0], True)
-    except:
+    except (ValueError, RuntimeError) as e:
         pass
 
     model = load_model_from_project(project_dir)
