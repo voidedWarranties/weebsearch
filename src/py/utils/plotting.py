@@ -19,19 +19,13 @@ def hist_mat(hist):
     
     return bar
 
-# plot results from cmd.search
-def plot(im_path, res, save_loc=None):
-    cv_img = None
-    if not isinstance(im_path, str):
-        cv_img = proc.bytes_to_mat(im_path)
-    else:
-        cv_img = cv.imread(im_path)
-    
-    hits, palettes, w_dists, palette, query_tags, rating = res
+# get text and images to be plotted
+def get_plot_data(res, img):
+    hits, _, w_dists, _, query_tags, rating = res
 
     titles = ["Query Image"]
     texts = [multiline(np.append([rating[0]], query_tags[:9]))]
-    images = [cv_img]
+    images = [img]
     for i, hit in enumerate(hits):
         path_trimmed = (hit["path"][:40] + "...") if len(hit["path"]) > 40 else hit["path"]
         titles.append("#{} {}".format(i + 1, path_trimmed))
@@ -43,6 +37,19 @@ def plot(im_path, res, save_loc=None):
         texts.append(label)
 
         images.append(cv.imread(hit["path"]))
+    
+    return titles, texts, images
+
+# plot results from cmd.search
+def plot(im_path, res, save_loc=None):
+    cv_img = None
+    if isinstance(im_path, str):
+        cv_img = cv.imread(im_path)
+    else:
+        cv_img = proc.bytes_to_mat(im_path)
+    
+    _, palettes, _, palette, _, _ = res
+    titles, texts, images = get_plot_data(res, cv_img)
 
     palettes = [hist_mat(v) for v in np.append([palette], palettes, axis=0)]
 

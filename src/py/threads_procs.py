@@ -7,6 +7,7 @@ from os import path
 import zmq
 import base64
 import commands as cmd
+import utils.plotting as plotting
 
 project_dir = "dan-model"
 
