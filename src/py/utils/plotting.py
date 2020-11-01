@@ -21,7 +21,7 @@ def hist_mat(hist):
 
 # get text and images to be plotted
 def get_plot_data(res, img):
-    hits, _, w_dists, _, query_tags, rating = res
+    hits, _, w_dists, w_scores, _, query_tags, rating = res
 
     titles = ["Query Image"]
     texts = [multiline(np.append([rating[0]], query_tags[:9]))]
@@ -33,6 +33,7 @@ def get_plot_data(res, img):
         label = "ID: {}".format(hit["id"])
         label += "\nSearch Score: {}".format(hit["score"])
         label += "\nColor Difference: {}".format(math.floor(w_dists[i] * 1000) / 1000)
+        label += "\nWeighted Score: {}".format(math.floor(w_scores[i] * 1000) / 1000)
         label += "\n" + multiline(hit["tags"][:10])
         texts.append(label)
 
@@ -48,7 +49,7 @@ def plot(im_path, res, save_loc=None):
     else:
         cv_img = proc.bytes_to_mat(im_path)
     
-    _, palettes, _, palette, _, _ = res
+    _, palettes, _, _, palette, _, _ = res
     titles, texts, images = get_plot_data(res, cv_img)
 
     palettes = [hist_mat(v) for v in np.append([palette], palettes, axis=0)]

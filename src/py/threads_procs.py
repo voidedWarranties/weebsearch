@@ -13,10 +13,11 @@ project_dir = "dan-model"
 
 def data_process(zipped):
     out_arr = []
-    for hit, palette, dist in zipped:
+    for hit, palette, dist, w_score in zipped:
         out = hit
         out["palette"] = palette.tolist()
         out["dist"] = dist
+        out["w_score"] = w_score
         out_arr.append(out)
     
     return out_arr
@@ -71,9 +72,9 @@ class Processor(Process):
         res = cmd.search(perf, self.es, self.evaluate, im_bytes, int(search_page))
 
         if res:
-            hits, palettes, w_dists, palette, query_tags, rating = res
+            hits, palettes, w_dists, w_scores, palette, query_tags, rating = res
 
-            zipped = list(zip(hits, palettes, w_dists))
+            zipped = list(zip(hits, palettes, w_dists, w_scores))
             processed = data_process(zipped)
 
             out_path = "out/{}.png".format(identifier)

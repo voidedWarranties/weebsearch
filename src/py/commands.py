@@ -54,10 +54,10 @@ def search(perf, es, evaluate, im_path, search_page=0):
     hits = list(map(proc.hit_process, hits))
 
     perf.begin_section("color matching")
-    hits, palettes, w_dists = proc.color_sort(hits, palette)
+    hits, palettes, w_dists, w_scores = proc.color_sort(hits, palette)
     perf.end_section("color matching")
 
-    return hits, palettes, w_dists, palette, query_tags, rating
+    return hits, palettes, w_dists, w_scores, palette, query_tags, rating
 
 # process an image file
 def process_file(evaluate, im_file):

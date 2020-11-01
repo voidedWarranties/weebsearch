@@ -16,7 +16,6 @@ def rand_id(n=16):
 # elasticsearch hit to output format
 def hit_process(hit):
     out = hit["_source"]
-    out["id"] = hit["_id"]
     out["score"] = hit["_score"]
 
     return out
@@ -76,15 +75,23 @@ def color_sort(hits, palette):
         if path.exists(palette_path):
             palettes.append(np.load(palette_path))
     
+    es_scores = list(map(lambda x: x["score"], hits))
+    es_scores_norm = np.array(es_scores) / np.sum(es_scores)
+    
     dists = distances(palette, palettes)
     w_dists = weight(dists)
-    sort = np.argsort(w_dists)
+    w_dists_norm = w_dists / np.sum(w_dists)
+
+    w_scores = 130 * es_scores_norm - 30 * w_dists_norm
+
+    sort = np.argsort(-w_scores)
 
     hits = np.array(hits)[sort]
     palettes = np.array(palettes)[sort]
     w_dists = w_dists[sort]
+    w_scores = w_scores[sort]
 
-    return hits, palettes, w_dists
+    return hits, palettes, w_dists, w_scores
 
 # generates palette from histogram and clusters
 def gen_palette(hist, clusters):

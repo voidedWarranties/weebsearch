@@ -8,6 +8,7 @@ mixin display(idx, result)
             p <b>ID:</b> #{result.id}
             p <b>Color distance:</b> #{Math.floor(result.dist * 1000) / 1000}
             p <b>Elasticsearch score:</b> #{Math.floor(result.score * 1000) / 1000}
+            p <b>Weighted score:</b> #{Math.floor(result.w_score * 1000) / 1000}
             b Tags:
             p= result.tags[0]
             p= result.tags.slice(1).join(", ")
