@@ -3,7 +3,7 @@ script(src="https://unpkg.com/tippy.js@6/dist/tippy-bundle.umd.js")
 
 mixin display(idx, result)
     div(style="display: inline-block; position: relative;")
-        if idx
+        if idx != null
             h1.num-label= idx + startRank
         a(href=result.path target="_blank")
             img.has-tooltip(src=result.path + "?w=240" data-id=result.id height="200px" style="border: 2px solid black;")
