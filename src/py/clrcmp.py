@@ -16,27 +16,27 @@ utils.ensure_dir("data")
 
 # globals
 project_dir = "dan-model"
-evaluate = None
-es = None
 perf = Performance()
 
 # initialize model and tag list
 def setup_dan():
     import dan_utils
-    global evaluate
     perf.begin_section("dan/tf init")
     evaluate = dan_utils.setup_dan(project_dir)
     perf.end_section("dan/tf init")
 
+    return evaluate
+
 # elasticsearch
 def setup_elastic():
-    global es
     es = Elasticsearch()
     cmd.setup_elastic(es, args.clear)
+    return es
 
 # commands
 def handle_process(res):
-    setup_dan()
+    evaluate = setup_dan()
+
     perf.begin_section("processing")
     for im_file in utils.iterate_library():
         cmd.process_file(evaluate, im_file)
@@ -44,7 +44,8 @@ def handle_process(res):
     perf.end_section("processing")
 
 def handle_index(res):
-    setup_elastic()
+    es = setup_elastic()
+
     perf.begin_section("elastic indexing")
     for im_file in utils.iterate_library():
         cmd.index_file(es, im_file)
@@ -52,8 +53,9 @@ def handle_index(res):
     perf.end_section("elastic indexing")
 
 def handle_search(res):
-    setup_dan()
-    setup_elastic()
+    evaluate = setup_dan()
+    es = setup_elastic()
+    
     im_path = res.image
     res = cmd.search(perf, es, evaluate, im_path)
 

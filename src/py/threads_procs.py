@@ -70,7 +70,8 @@ class Processor(Process):
                 search_page = 0
                 try:
                     search_page = line_split[4]
-                except: pass
+                except IndexError as e:
+                    pass
                 
                 res = cmd.search(perf, es, evaluate, im_bytes, int(search_page))
 
@@ -89,7 +90,8 @@ class Processor(Process):
                     try:
                         if line_split[3] == "0":
                             should_plot = False
-                    except: pass
+                    except IndexError as e:
+                        pass
 
                     if should_plot:
                         perf.begin_section("plotting")

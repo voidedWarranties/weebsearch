@@ -48,7 +48,9 @@ def search(perf, es, evaluate, im_path, search_page=0):
     perf.end_section("elasticsearch")
 
     hits = res["hits"]["hits"]
-    if len(hits) < 1: return False
+    if len(hits) < 1:
+        return False
+
     hits = list(map(utils.hit_process, hits))
 
     palettes = []
@@ -111,7 +113,8 @@ def setup_elastic(es, clear):
 def index_file(es, im_file):
     _, tags_path = utils.get_paths(im_file)
 
-    if not path.exists(tags_path): return
+    if not path.exists(tags_path):
+        return
 
     tags_out = []
 
