@@ -5,6 +5,13 @@ import numpy as np
 from sklearn.cluster import MiniBatchKMeans
 import utils.fs as fs
 from os import path
+import random
+import string
+
+# generate a random string
+def rand_id(n=16):
+    s = string.ascii_letters + string.digits
+    return ''.join(random.choice(s) for _ in range(n))
 
 # elasticsearch hit to output format
 def hit_process(hit):

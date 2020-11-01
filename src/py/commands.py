@@ -4,6 +4,7 @@ from os import path
 import numpy as np
 import cv2 as cv
 import six
+import elasticsearch
 
 # search image library
 def search(perf, es, evaluate, im_path, search_page=0):
@@ -78,8 +79,24 @@ def process_file(evaluate, im_file):
 
 # initialize elastic index
 def setup_elastic(es, clear):
+    ingest = elasticsearch.client.IngestClient(es)
+
     if clear:
         es.indices.delete(index="anime", ignore=404)
+
+        ingest_body = {
+            "description": "Add timestamp",
+            "processors": [
+                {
+                    "set": {
+                        "field": "timestamp",
+                        "value": "{{_ingest.timestamp}}"
+                    }
+                }
+            ]
+        }
+
+        ingest.put_pipeline("timestamp", body=ingest_body)
     
     index_body = {
         "mappings": {
@@ -110,9 +127,12 @@ def index_file(es, im_file):
             tag, confidence = line.split(" ")
             tags_out.append(tag)
     
+    tb_id = proc.rand_id()
+    
     doc = {
         "path": im_file,
-        "tags": tags_out
+        "tags": tags_out,
+        "id": tb_id
     }
 
     res = es.count(index="anime", body={
@@ -126,7 +146,9 @@ def index_file(es, im_file):
     if not res["count"]:
         es.index(
             index="anime",
-            body=doc
+            body=doc,
+            pipeline="timestamp",
+            id=tb_id
         )
         return True
     
