@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        meta(name="viewport" content="width=device-width, initial-scale=1.0")
+        title weebsearch
+
+        link(rel="stylesheet" href="common.css")
+
+        style.
+            #upload {
+                color: black;
+                background-color: darkgray;
+                padding: 50px 100px;
+            }
+    body
+        .center
+            h1 weebsearch
+            form(action="/search-image" method="POST" enctype="multipart/form-data" name="search-form")
+                label(for="query")
+                    #upload(style="border: 3px dashed white;")
+                        i Upload - Drag or Browse
+                input(type="file" name="query" id="query" style="display: none;")
+                br
+                input(type="submit" value="Search" name="search")
+            
+            img(src="/counter/" + count height="100")
+    
+        script.
+            const fileInput = document.getElementById("query");
+            const dragContainer = document.getElementById("upload");
+            
+            dragContainer.ondragover = dragContainer.ondragenter = e => {
+                e.preventDefault();
+            }
+
+            dragContainer.ondrop = e => {
+                const data = new DataTransfer();
+                data.items.add(e.dataTransfer.files[0]);
+                fileInput.files = data.files;
+
+                e.preventDefault();
+                document["search-form"].submit();
+            }

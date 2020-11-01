@@ -1,0 +1,46 @@
+const { Command } = require("karasu");
+const fs = require("fs");
+const { randomString, downloadImage, sendAndWait, imageB64 } = require("../../../js_common/utils");
+
+module.exports = class SearchCommand extends Command {
+    constructor(bot) {
+        super(bot, "search", {
+            category: "search"
+        });
+    }
+
+    run(msg, args) {
+        const attachments = msg.attachments;
+
+        const url = attachments.length ? attachments[0].url : args[0];
+
+        if (!url) return "No image specified";
+
+        const id = randomString();
+
+        imageB64(url).then(async b64 => {
+            if (!b64) return;
+
+            const output = await sendAndWait(id, this.bot.sock, `search$${id}$${b64}`);
+
+            if (!output) {
+                return msg.channel.createMessage("Timed out");
+            }
+
+            if (output[1] == "failed") {
+                return msg.channel.createMessage("No results");
+            }
+
+            const jsonOutput = JSON.parse(output[1]);
+
+            const plt = output[2];
+
+            await msg.channel.createMessage(`**performance**:\n${jsonOutput.performance}`, {
+                file: fs.readFileSync(plt),
+                name: "out.png"
+            });
+
+            fs.unlinkSync(plt);
+        });
+    }
+}
