@@ -1,10 +1,12 @@
+# set up deepdanbooru and tensorflow
+# logs should be disabled in env before importing this
 from deepdanbooru.project import load_model_from_project, load_tags_from_project
 from deepdanbooru.commands import evaluate_image
 import numpy as np
 
-# setup deepdanbooru
 def setup_dan(project_dir):
     import tensorflow as tf
+
     # set gpu config for rtx
     gpus = tf.config.list_physical_devices("GPU")
     try:

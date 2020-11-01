@@ -1,4 +1,5 @@
-import utils
+import utils.processing as proc
+import utils.fs as fs
 from os import path
 import numpy as np
 import cv2 as cv
@@ -13,11 +14,11 @@ def search(perf, es, evaluate, im_path, search_page=0):
         cv_img = cv.imread(im_path)
         tf_img = im_path
     else:
-        cv_img = utils.bytes_to_mat(im_path)
+        cv_img = proc.bytes_to_mat(im_path)
         tf_img = six.BytesIO(im_path)
     
     perf.begin_section("query image processing")
-    palette = utils.batch_hist(cv_img)
+    palette = proc.palette_hist(cv_img)
     perf.end_section("query image processing")
 
     perf.begin_section("query tag processing")
@@ -49,20 +50,20 @@ def search(perf, es, evaluate, im_path, search_page=0):
     if len(hits) < 1:
         return False
 
-    hits = list(map(utils.hit_process, hits))
+    hits = list(map(proc.hit_process, hits))
 
     perf.begin_section("color matching")
-    hits, palettes, w_dists = utils.color_sort(hits, palette)
+    hits, palettes, w_dists = proc.color_sort(hits, palette)
     perf.end_section("color matching")
 
     return hits, palettes, w_dists, palette, query_tags, rating
 
 # process an image file
 def process_file(evaluate, im_file):
-    palette_path, tags_path = utils.get_paths(im_file)
+    palette_path, tags_path = fs.get_paths(im_file)
 
     if not path.exists(palette_path):
-        palette = utils.batch_hist(cv.imread(im_file))
+        palette = proc.palette_hist(cv.imread(im_file))
         np.save(palette_path, palette)
     
     if not path.exists(tags_path):
@@ -95,7 +96,7 @@ def setup_elastic(es, clear):
 
 # index a file into elastic
 def index_file(es, im_file):
-    _, tags_path = utils.get_paths(im_file)
+    _, tags_path = fs.get_paths(im_file)
 
     if not path.exists(tags_path):
         return

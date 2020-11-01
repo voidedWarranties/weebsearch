@@ -7,7 +7,6 @@ from os import path
 import zmq
 import base64
 import commands as cmd
-import utils
 
 project_dir = "dan-model"
 
@@ -41,10 +40,10 @@ class Processor(Process):
         self.out_q = Queue()
     
     def run(self):
-        import dan_utils
+        import utils.dan as dan
         from elasticsearch import Elasticsearch
         
-        evaluate = dan_utils.setup_dan(project_dir)
+        evaluate = dan.setup_dan(project_dir)
 
         es = Elasticsearch()
         cmd.setup_elastic(es, False)
@@ -95,7 +94,7 @@ class Processor(Process):
 
                     if should_plot:
                         perf.begin_section("plotting")
-                        utils.plot(im_bytes, res, out_path)
+                        plotting.plot(im_bytes, res, out_path)
                         perf.end_section("plotting")
                     
                     out_dict = {

@@ -4,15 +4,16 @@ from performance import Performance
 from threads_procs import Processor, ResponseThread
 import zmq
 import signal
-import utils
+import utils.fs as fs
+import utils.plotting as plotting
 import commands as cmd
 
 # disable logs
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
-utils.ensure_dir("library")
-utils.ensure_dir("data")
+fs.ensure_dir("library")
+fs.ensure_dir("data")
 
 # globals
 project_dir = "dan-model"
@@ -20,9 +21,9 @@ perf = Performance()
 
 # initialize model and tag list
 def setup_dan():
-    import dan_utils
+    import utils.dan as dan
     perf.begin_section("dan/tf init")
-    evaluate = dan_utils.setup_dan(project_dir)
+    evaluate = dan.setup_dan(project_dir)
     perf.end_section("dan/tf init")
 
     return evaluate
@@ -38,7 +39,7 @@ def handle_process(res):
     evaluate = setup_dan()
 
     perf.begin_section("processing")
-    for im_file in utils.iterate_library():
+    for im_file in fs.iterate_library():
         cmd.process_file(evaluate, im_file)
         print(im_file)
     perf.end_section("processing")
@@ -47,7 +48,7 @@ def handle_index(res):
     es = setup_elastic()
 
     perf.begin_section("elastic indexing")
-    for im_file in utils.iterate_library():
+    for im_file in fs.iterate_library():
         cmd.index_file(es, im_file)
         print(im_file)
     perf.end_section("elastic indexing")
@@ -60,10 +61,10 @@ def handle_search(res):
     res = cmd.search(perf, es, evaluate, im_path)
 
     if res:
-        utils.plot(im_path, res)
+        plotting.plot(im_path, res)
 
 def handle_zmq(res):
-    utils.ensure_dir("out")
+    fs.ensure_dir("out")
 
     context = zmq.Context()
     socket = context.socket(zmq.ROUTER)
