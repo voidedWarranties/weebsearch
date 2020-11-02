@@ -8,7 +8,7 @@ const bot = new Client(config.token, {
 }, {
     owner: config.owner,
     defaultCommands: true,
-    development: config.development,
+    development: process.env.NODE_ENV === "development",
     categories: [
         {
             id: "search",
