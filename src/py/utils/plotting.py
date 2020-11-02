@@ -19,6 +19,9 @@ def hist_mat(hist):
     
     return bar
 
+def round_decimal(num):
+    return math.floor(num * 1000) / 1000
+
 # get text and images to be plotted
 def get_plot_data(res, img):
     hits, _, w_dists, w_scores, _, query_tags, rating = res
@@ -32,8 +35,8 @@ def get_plot_data(res, img):
 
         label = "ID: {}".format(hit["id"])
         label += "\nSearch Score: {}".format(hit["score"])
-        label += "\nColor Difference: {}".format(math.floor(w_dists[i] * 1000) / 1000)
-        label += "\nWeighted Score: {}".format(math.floor(w_scores[i] * 1000) / 1000)
+        label += "\nColor Difference: {}".format(round_decimal(w_dists[i]))
+        label += "\nWeighted Score: {}".format(round_decimal(w_scores[i]))
         label += "\n" + multiline(hit["tags"][:10])
         texts.append(label)
 
@@ -72,8 +75,8 @@ def plot(im_path, res, out_img=False):
     
     if out_img:
         return plt_to_png(fig)
-    else:
-        plt.show()
+    
+    plt.show()
 
 # convert array of tags to multiline string
 def multiline(arr, line_len = 30):

@@ -8,6 +8,9 @@ const fs = require("fs");
 const { imgWizMiddleWare } = require("express-imgwiz");
 const https = require("https");
 
+const SearchRouter = require("./routes/search");
+const BrowseRouter = require("./routes/browse");
+
 const es = new ElasticWrapper({ node: "http://localhost:9200" });
 const sock = new IpcSocket();
 
@@ -27,8 +30,8 @@ app.use("/library", imgWizMiddleWare({
     cacheDir: "cache"
 }));
 
-app.use("/", require("./routes/search")(es, sock, pageLength));
-app.use("/", require("./routes/browse")(es, pageLength));
+app.use("/", new SearchRouter(es, sock, pageLength));
+app.use("/", new BrowseRouter(es, pageLength));
 
 app.get("/", (req, res) => {
     es.count({ index: "anime" }).then(r => {

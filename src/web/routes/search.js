@@ -1,10 +1,8 @@
-const express = require("express");
+const Router = require("router");
 const path = require("path");
 const fs = require("fs");
 const { randomString } = require("../../js_common/utils");
 const FileType = require("file-type");
-
-const router = express.Router();
 
 function modified(dir, file) {
     return fs.statSync(path.join(dir, file)).mtime;
@@ -24,8 +22,19 @@ function resultUrl(file, page) {
     return `/search-results?file=${file}&page=${page}`;
 }
 
-module.exports = (es, sock, pageLength) => {
-    router.post("/search-image", async (req, res) => {
+module.exports = class SearchRouter extends Router {
+    constructor(es, sock, pageLength) {
+        super();
+
+        this.es = es;
+        this.sock = sock;
+        this.pageLength = pageLength;
+
+        this.post("/search-image", this.handleSearch.bind(this));
+        this.get("/search-results", this.handleResults.bind(this));
+    }
+
+    async handleSearch(req, res) {
         if (!req.files || !req.files.query) return res.status(400);
         const file = req.files.query;
     
@@ -42,10 +51,10 @@ module.exports = (es, sock, pageLength) => {
         purgeFiles();
     
         res.redirect(`/search-results?file=${fileName}`);
-    });
+    }
 
-    router.get("/search-results", (req, res) => {
-        es.count({ index: "anime" }).then(async r => {
+    async handleResults(req, res) {
+        this.es.count({ index: "anime" }).then(async r => {
             var { file, page } = req.query;
             page = page ? parseInt(page) : 0;
     
@@ -57,7 +66,7 @@ module.exports = (es, sock, pageLength) => {
             const data = fs.readFileSync(path.join("queries", file));
             const { mime } = await FileType.fromBuffer(data);
             const b64 = data.toString("base64");
-            const output = await sock.sendAndWait(id, `search$${id}$${b64}$0$${page || 0}`);
+            const output = await this.sock.sendAndWait(id, `search$${id}$${b64}$0$${page || 0}`);
     
             if (!output) return res.status(500);
     
@@ -65,9 +74,9 @@ module.exports = (es, sock, pageLength) => {
     
             const outObj = JSON.parse(output[1]);
     
-            const startRank = (page || 0) * pageLength + 1;
+            const startRank = (page || 0) * this.pageLength + 1;
     
-            const maxPage = Math.ceil(r.body.count / pageLength) - 1;
+            const maxPage = Math.ceil(r.body.count / this.pageLength) - 1;
     
             res.render("results", {
                 results: outObj,
@@ -79,7 +88,5 @@ module.exports = (es, sock, pageLength) => {
                 startRank
             });
         });
-    });
-
-    return router;
+    }
 }
