@@ -2,7 +2,7 @@ const express = require("express");
 const path = require("path");
 const Counter = require("../js_common/counter");
 const ElasticWrapper = require("./esUtils");
-const { IpcSocket, sendAndWait, randomString } = require("../js_common/utils");
+const { IpcSocket, randomString } = require("../js_common/utils");
 const fileUpload = require("express-fileupload");
 const fs = require("fs");
 const FileType = require("file-type");
@@ -90,7 +90,7 @@ app.get("/search-results", (req, res) => {
         const data = fs.readFileSync(path.join("queries", file));
         const { mime } = await FileType.fromBuffer(data);
         const b64 = data.toString("base64");
-        const output = await sendAndWait(id, sock, `search$${id}$${b64}$0$${page || 0}`);
+        const output = await sock.sendAndWait(id, `search$${id}$${b64}$0$${page || 0}`);
 
         if (!output) return res.status(500);
 

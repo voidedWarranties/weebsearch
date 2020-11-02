@@ -1,6 +1,6 @@
 const { Command } = require("karasu");
 const fs = require("fs");
-const { randomString, downloadImage, sendAndWait, imageB64 } = require("../../../js_common/utils");
+const { randomString, imageB64 } = require("../../../js_common/utils");
 
 module.exports = class SearchCommand extends Command {
     constructor(bot) {
@@ -21,7 +21,7 @@ module.exports = class SearchCommand extends Command {
         imageB64(url).then(async b64 => {
             if (!b64) return;
 
-            const output = await sendAndWait(id, this.bot.sock, `search$${id}$${b64}`);
+            const output = await this.bot.sock.sendAndWait(id, `search$${id}$${b64}`);
 
             if (!output) {
                 return msg.channel.createMessage("Timed out");

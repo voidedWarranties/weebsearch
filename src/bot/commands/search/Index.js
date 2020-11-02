@@ -1,6 +1,6 @@
 const { Command } = require("karasu");
 const config = require("../../config.json");
-const { randomString, downloadImage, sendAndWait } = require("../../../js_common/utils");
+const { randomString, downloadImage } = require("../../../js_common/utils");
 const fs = require("fs");
 
 module.exports = class IndexCommand extends Command {
@@ -24,7 +24,7 @@ module.exports = class IndexCommand extends Command {
         downloadImage(url, `library/${id}`).then(async filePath => {
             if (!filePath) return;
 
-            const output = await sendAndWait(id, this.bot.sock, `process$${id}$${filePath}`);
+            const output = await this.bot.sock.sendAndWait(id, `process$${id}$${filePath}`);
             if (!output) {
                 return msg.channel.createMessage("Timed out");
             }
@@ -37,7 +37,7 @@ module.exports = class IndexCommand extends Command {
 
             await msg.channel.createMessage(`Created ${output[1]}`);
 
-            await sendAndWait(id, this.bot.sock, `index$${id}$${filePath}`);
+            await this.bot.sock.sendAndWait(id, `index$${id}$${filePath}`);
         });
     }
 }

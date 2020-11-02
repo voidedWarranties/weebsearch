@@ -40,44 +40,44 @@ module.exports.imageB64 = url => {
     });
 }
 
-module.exports.sendAndWait = (id, sock, msg) => {
-    return new Promise(async resolve => {
-        await sock.send(msg);
-
-        const handler = async res => {
-            const begin = `>>${id}$`;
-            if (res.startsWith(begin)) {
-                const output = res.toString().slice(begin.length).split("$");
-                sock.emitter.off("message", handler);
-                resolve(output);
-            }
-        }
-
-        setTimeout(() => {
-            sock.emitter.off("message", handler);
-            resolve(null);
-        }, 15000);
-
-        sock.emitter.on("message", handler);
-    });
-}
-
-module.exports.IpcSocket = class IpcSocket {
+module.exports.IpcSocket = class IpcSocket extends EventEmitter {
     constructor() {
+        super();
+
         this.socket = new zmq.Dealer({
             reconnectInterval: 1000
         });
 
         this.socket.connect("tcp://127.0.0.1:6969");
 
-        this.emitter = new EventEmitter();
-
         this.loop();
+    }
+
+    sendAndWait(id, msg) {
+        return new Promise(async resolve => {
+            await this.send(msg);
+
+            const handler = async res => {
+                const begin = `>>${id}$`;
+                if (res.startsWith(begin)) {
+                    const output = res.toString().slice(begin.length).split("$");
+                    this.off("message", handler);
+                    resolve(output);
+                }
+            }
+
+            setTimeout(() => {
+                this.off("message", handler);
+                resolve(null);
+            }, 15000);
+
+            this.on("message", handler);
+        });
     }
 
     async loop() {
         for await (const [msg] of this.socket) {
-            this.emitter.emit("message", msg.toString());
+            this.emit("message", msg.toString());
         }
     }
 
