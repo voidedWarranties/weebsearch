@@ -7,6 +7,9 @@ cache/*
 queries/*
 !queries/.gitkeep
 
+certs/*
+!certs/.gitkeep
+
 library/
 data/
 out/

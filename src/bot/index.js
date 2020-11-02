@@ -1,5 +1,5 @@
 const { Client } = require("karasu");
-const config = require("./config.json");
+const config = require("../config.json");
 const path = require("path");
 const { IpcSocket } = require("../js_common/utils");
 

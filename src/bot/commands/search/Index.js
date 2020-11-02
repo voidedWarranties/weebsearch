@@ -1,5 +1,5 @@
 const { Command } = require("karasu");
-const config = require("../../config.json");
+const config = require("../../../config.json");
 const { randomString, downloadImage } = require("../../../js_common/utils");
 const fs = require("fs");
 

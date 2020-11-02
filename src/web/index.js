@@ -7,6 +7,7 @@ const fileUpload = require("express-fileupload");
 const fs = require("fs");
 const FileType = require("file-type");
 const { imgWizMiddleWare } = require("express-imgwiz");
+const https = require("https");
 
 const es = new ElasticWrapper({ node: "http://localhost:9200" });
 const sock = new IpcSocket();
@@ -155,6 +156,14 @@ app.get("/counter/:number", (req, res) => {
 });
 
 (async function () {
-    app.listen(8080, () => { console.log("Listening") });
+    https.createServer({
+        key: fs.readFileSync("certs/privkey.pem"),
+        cert: fs.readFileSync("certs/fullchain.pem")
+    }, app).listen(8443, () => {
+        console.log("Listening");
+    });
+
+    app.listen(8080);
+
     await counter.init();
 })();
