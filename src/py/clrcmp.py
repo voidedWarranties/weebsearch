@@ -64,8 +64,6 @@ def handle_search(res):
         plotting.plot(im_path, res)
 
 def handle_zmq(res):
-    fs.ensure_dir("out")
-
     context = zmq.Context()
     socket = context.socket(zmq.ROUTER)
     socket.bind("tcp://*:6969")

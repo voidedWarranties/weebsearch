@@ -77,8 +77,6 @@ class Processor(Process):
             zipped = list(zip(hits, palettes, w_dists, w_scores))
             processed = data_process(zipped)
 
-            out_path = "out/{}.png".format(identifier)
-
             should_plot = True
 
             try:
@@ -86,10 +84,12 @@ class Processor(Process):
                     should_plot = False
             except IndexError as e:
                 pass
+                
+            plt_bytes = None
 
             if should_plot:
                 perf.begin_section("plotting")
-                plotting.plot(im_bytes, res, out_path)
+                plt_bytes = plotting.plot(im_bytes, res, True)
                 perf.end_section("plotting")
             
             out_dict = {
@@ -102,9 +102,9 @@ class Processor(Process):
 
             out_json = json.dumps(out_dict)
 
-            send_path = path.abspath(out_path) if should_plot else "*"
+            send_img = base64.b64encode(plt_bytes).decode("utf-8") if should_plot else "*"
 
-            return ">>{}$search${}${}".format(identifier, out_json, send_path)
+            return ">>{}$search${}${}".format(identifier, out_json, send_img)
         
         return ">>{}$search$failed".format(identifier)
     

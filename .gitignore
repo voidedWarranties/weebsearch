@@ -12,7 +12,6 @@ certs/*
 
 library/
 data/
-out/
 
 node_modules/
 

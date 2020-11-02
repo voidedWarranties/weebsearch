@@ -1,5 +1,4 @@
 const { Command } = require("karasu");
-const fs = require("fs");
 const { randomString, imageB64 } = require("../../../js_common/utils");
 
 module.exports = class SearchCommand extends Command {
@@ -36,11 +35,9 @@ module.exports = class SearchCommand extends Command {
             const plt = output[2];
 
             await msg.channel.createMessage(`**performance**:\n${jsonOutput.performance}`, {
-                file: fs.readFileSync(plt),
+                file: Buffer.from(plt, "base64"),
                 name: "out.png"
             });
-
-            fs.unlinkSync(plt);
         });
     }
 }

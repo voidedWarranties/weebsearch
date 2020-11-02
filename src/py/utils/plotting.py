@@ -41,8 +41,20 @@ def get_plot_data(res, img):
     
     return titles, texts, images
 
+# plt figure to png bytes
+def plt_to_png(fig):
+    data, dims = fig.canvas.print_to_buffer()
+
+    img = np.frombuffer(data, dtype="uint8")
+    img = img.reshape((dims[1], dims[0], 4))
+    img = cv.cvtColor(img, cv.COLOR_RGBA2BGR)
+
+    retval, buf = cv.imencode(".png", img)
+    
+    return buf.tobytes()
+
 # plot results from cmd.search
-def plot(im_path, res, save_loc=None):
+def plot(im_path, res, out_img=False):
     cv_img = None
     if isinstance(im_path, str):
         cv_img = cv.imread(im_path)
@@ -54,12 +66,12 @@ def plot(im_path, res, save_loc=None):
 
     palettes = [hist_mat(v) for v in np.append([palette], palettes, axis=0)]
 
-    tile_images(images, palettes, titles, texts)
+    fig = tile_images(images, palettes, titles, texts)
     
     plt.tight_layout()
     
-    if save_loc:
-        plt.savefig(save_loc, facecolor="lightgray")
+    if out_img:
+        return plt_to_png(fig)
     else:
         plt.show()
 
@@ -104,3 +116,5 @@ def tile_images(images, palettes, titles, texts):
     for x in range(width * 2):
         for y in range(width):
             axarr[x, y].axis("off")
+    
+    return f
