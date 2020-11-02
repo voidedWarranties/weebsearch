@@ -42,7 +42,18 @@ module.exports = class ElasticWrapper extends elasticsearch.Client {
 
         return this.search(opts)
             .then(res => res.body.hits.hits)
-            .then(hits => hits.map(h => h._source))
-            .then(hits => reverse ? hits.reverse() : hits);
+            .then(hits => {
+                hits = hits.map(h => h._source)
+
+                if (reverse) {
+                    hits = hits.reverse();
+                }
+
+                for (const result of hits) {
+                    result.path = "/" + result.path.replace(/\\/g, "/");
+                }
+
+                return hits;
+            });
     }
 }
