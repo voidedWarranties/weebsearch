@@ -18,6 +18,9 @@ def search(perf, es, evaluate, im_path, search_page=0):
         cv_img = proc.bytes_to_mat(im_path)
         tf_img = six.BytesIO(im_path)
     
+    if cv_img is None:
+        return False
+    
     perf.begin_section("query image processing")
     palette = proc.palette_hist(cv_img)
     perf.end_section("query image processing")
@@ -63,8 +66,13 @@ def search(perf, es, evaluate, im_path, search_page=0):
 def process_file(evaluate, im_file):
     palette_path, tags_path = fs.get_paths(im_file)
 
+    img = cv.imread(im_file)
+
+    if img is None:
+        return False
+
     if not path.exists(palette_path):
-        palette = proc.palette_hist(cv.imread(im_file))
+        palette = proc.palette_hist(img)
         np.save(palette_path, palette)
     
     if not path.exists(tags_path):
@@ -76,6 +84,8 @@ def process_file(evaluate, im_file):
         
         with open(tags_path, "w") as f:
             f.write(out)
+    
+    return True
 
 # initialize elastic index
 def setup_elastic(es, clear):

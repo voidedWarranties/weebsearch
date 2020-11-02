@@ -45,9 +45,9 @@ class Processor(Process):
         command, identifier, im_file = line_split[:3]
 
         im_file = path.relpath(im_file)
-        cmd.process_file(self.evaluate, im_file)
+        success = cmd.process_file(self.evaluate, im_file)
 
-        return ">>{}$process${}".format(identifier, im_file)
+        return ">>{}$process${}${}".format(identifier, im_file, 1 if success else 0)
     
     def index(self, line_split):
         command, identifier, im_file = line_split[:3]

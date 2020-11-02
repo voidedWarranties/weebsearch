@@ -1,6 +1,7 @@
 const { Command } = require("karasu");
 const config = require("../../config.json");
 const { randomString, downloadImage, sendAndWait } = require("../../../js_common/utils");
+const fs = require("fs");
 
 module.exports = class IndexCommand extends Command {
     constructor(bot) {
@@ -27,6 +28,13 @@ module.exports = class IndexCommand extends Command {
             if (!output) {
                 return msg.channel.createMessage("Timed out");
             }
+
+            const status = parseInt(output[2]);
+            if (!status) {
+                fs.unlinkSync(filePath);
+                return msg.channel.createMessage("Indexing failed. Check your image format.");
+            }
+
             await msg.channel.createMessage(`Created ${output[1]}`);
 
             await sendAndWait(id, this.bot.sock, `index$${id}$${filePath}`);
