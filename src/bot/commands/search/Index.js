@@ -3,6 +3,12 @@ const config = require("../../../config.json");
 const { randomString, downloadImage } = require("../../../js_common/utils");
 const fs = require("fs");
 
+const messages = {
+    invalid: "Check image format",
+    dupe_path: "Image with path already exists",
+    questionable: "Image rated questionable or explicit"
+};
+
 module.exports = class IndexCommand extends Command {
     constructor(bot) {
         super(bot, "index", {
@@ -32,7 +38,7 @@ module.exports = class IndexCommand extends Command {
             const status = parseInt(output[2]);
             if (!status) {
                 fs.unlinkSync(filePath);
-                return msg.channel.createMessage("Indexing failed. Check your image format.");
+                return msg.channel.createMessage(`Indexing failed: ${messages[output[3]]}`);
             }
 
             await msg.channel.createMessage(`Created ${output[1]}`);

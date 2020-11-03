@@ -56,16 +56,19 @@ def search(perf, es, evaluate, im_path, search_page=0):
 def process_file(evaluate, im_file):
     img = cv.imread(im_file)
 
+    if img is None:
+        return False, "invalid"
+    
     existing = Image.select().where(Image.path == im_file).count()
 
     if existing > 0:
-        return False
-
-    if img is None:
-        return False
+        return False, "dupe_path"
 
     palette = proc.palette_hist(img)
     tags_out, rating = evaluate(im_file)
+
+    if rating != "rating:safe":
+        return False, "questionable"
     
     Image.create(
         id_=proc.rand_id(),
@@ -74,7 +77,7 @@ def process_file(evaluate, im_file):
         tags=np.append([rating], tags_out, axis=0)
         )
     
-    return True
+    return True, "ok"
 
 # initialize elastic index
 def setup_elastic(es, clear):
