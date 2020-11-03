@@ -67,7 +67,7 @@ def process_file(evaluate, im_file):
     palette = proc.palette_hist(img)
     tags_out, rating = evaluate(im_file)
 
-    if rating != "rating:safe":
+    if rating[0] != "rating:safe":
         return False, "questionable"
     
     Image.create(
