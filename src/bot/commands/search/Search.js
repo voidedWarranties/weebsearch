@@ -20,19 +20,19 @@ module.exports = class SearchCommand extends Command {
         imageB64(url).then(async b64 => {
             if (!b64) return;
 
-            const output = await this.bot.sock.sendAndWait(id, `search$${id}$${b64}`);
+            const output = await this.bot.sock.sendAndWait(id, { cmd: "search", id, file: b64 });
 
             if (!output) {
                 return msg.channel.createMessage("Timed out");
             }
 
-            if (output[1] == "failed") {
+            if (!output.success) {
                 return msg.channel.createMessage("No results");
             }
 
-            const jsonOutput = JSON.parse(output[1]);
+            const jsonOutput = output.data;
 
-            const plt = output[2];
+            const plt = output.plot;
 
             await msg.channel.createMessage(`**performance**:\n${jsonOutput.performance}`, {
                 file: Buffer.from(plt, "base64"),

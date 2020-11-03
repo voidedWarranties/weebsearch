@@ -66,13 +66,13 @@ module.exports = class SearchRouter extends Router {
             const data = fs.readFileSync(path.join("queries", file));
             const { mime } = await FileType.fromBuffer(data);
             const b64 = data.toString("base64");
-            const output = await this.sock.sendAndWait(id, `search$${id}$${b64}$0$${page || 0}`);
+            const output = await this.sock.sendAndWait(id, { cmd: "search", id, file: b64, page: page || 0, plot: false });
     
             if (!output) return res.status(500);
     
-            if (output[1] == "failed") return res.status(204);
+            if (!output.success) return res.status(204);
     
-            const outObj = JSON.parse(output[1]);
+            const outObj = output.data;
     
             const startRank = (page || 0) * this.pageLength + 1;
     

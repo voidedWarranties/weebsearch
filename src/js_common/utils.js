@@ -55,14 +55,13 @@ module.exports.IpcSocket = class IpcSocket extends EventEmitter {
 
     sendAndWait(id, msg) {
         return new Promise(async resolve => {
-            await this.send(msg);
+            await this.send(JSON.stringify(msg));
 
             const handler = async res => {
-                const begin = `>>${id}$`;
-                if (res.startsWith(begin)) {
-                    const output = res.toString().slice(begin.length).split("$");
+                res = JSON.parse(res);
+                if (res.id === id) {
                     this.off("message", handler);
-                    resolve(output);
+                    resolve(res);
                 }
             }
 

@@ -47,7 +47,7 @@ def distances(palette, palettes):
 
     palette = palette[:,:-1]
     palettes = palettes[:,:,:-1]
-    
+
     r1 = palette[:,0]
     r2 = palettes[:,:,0]
     
@@ -80,11 +80,10 @@ def weight(diffs):
 # reference palette
 def color_sort(hits, palette):
     paths = list(map(lambda h: h["path"], hits))
-    results = Image.select().where(Image.path.in_(paths))
 
-    palettes = []
-    
-    for res in results:
+    palettes = [] 
+    for hit in hits:
+        res = Image.select().where(Image.path == hit["path"])[0]
         palettes.append(res.colors)
     
     es_scores = list(map(lambda x: x["score"], hits))

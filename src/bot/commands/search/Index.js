@@ -30,20 +30,19 @@ module.exports = class IndexCommand extends Command {
         downloadImage(url, `library/${id}`).then(async filePath => {
             if (!filePath) return;
 
-            const output = await this.bot.sock.sendAndWait(id, `process$${id}$${filePath}`);
+            const output = await this.bot.sock.sendAndWait(id, { cmd: "process", id, file: filePath });
             if (!output) {
                 return msg.channel.createMessage("Timed out");
             }
 
-            const status = parseInt(output[2]);
-            if (!status) {
+            if (!output.success) {
                 fs.unlinkSync(filePath);
-                return msg.channel.createMessage(`Indexing failed: ${messages[output[3]]}`);
+                return msg.channel.createMessage(`Indexing failed: ${messages[output.msg]}`);
             }
 
-            await msg.channel.createMessage(`Created ${output[1]}`);
+            await msg.channel.createMessage(`Created ${output.file}`);
 
-            await this.bot.sock.sendAndWait(id, `index$${id}$${filePath}`);
+            await this.bot.sock.sendAndWait(id, { cmd: "index", id, file: filePath });
         });
     }
 }

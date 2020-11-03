@@ -8,6 +8,8 @@ import zmq
 import base64
 import commands as cmd
 import utils.plotting as plotting
+import json
+from operator import itemgetter
 
 project_dir = "dan-model"
 
@@ -41,23 +43,30 @@ class Processor(Process):
         self.in_q = Queue()
         self.out_q = Queue()
     
-    def process(self, line_split):
-        command, identifier, im_file = line_split[:3]
+    def process(self, query):
+        command, identifier, im_file = itemgetter("cmd", "id", "file")(query)
 
         im_file = path.relpath(im_file)
         success, msg = cmd.process_file(self.evaluate, im_file)
 
-        return ">>{}$process${}${}${}".format(identifier, im_file, 1 if success else 0, msg)
+        return {
+            "file": im_file,
+            "success": success,
+            "msg": msg
+        }
     
-    def index(self, line_split):
-        command, identifier, im_file = line_split[:3]
+    def index(self, query):
+        command, identifier, im_file = itemgetter("cmd", "id", "file")(query)
+
         im_file = path.relpath(im_file)
         indexed = cmd.index_file(self.es, im_file)
 
-        return ">>{}$index${}".format(identifier, 1 if indexed else 0)
+        return {
+            "indexed": indexed
+        }
     
-    def search(self, line_split):
-        command, identifier, im_file = line_split[:3]
+    def search(self, query):
+        command, identifier, im_file = itemgetter("cmd", "id", "file")(query)
 
         perf = Performance(False)
 
@@ -65,8 +74,8 @@ class Processor(Process):
 
         search_page = 0
         try:
-            search_page = line_split[4]
-        except IndexError as e:
+            search_page = query["page"]
+        except KeyError as e:
             pass
         
         res = cmd.search(perf, self.es, self.evaluate, im_bytes, int(search_page))
@@ -80,9 +89,9 @@ class Processor(Process):
             should_plot = True
 
             try:
-                if line_split[3] == "0":
+                if not query["plot"]:
                     should_plot = False
-            except IndexError as e:
+            except KeyError as e:
                 pass
                 
             plt_bytes = None
@@ -100,13 +109,17 @@ class Processor(Process):
                 "performance": perf.gen_report()
             }
 
-            out_json = json.dumps(out_dict)
-
             send_img = base64.b64encode(plt_bytes).decode("utf-8") if should_plot else "*"
 
-            return ">>{}$search${}${}".format(identifier, out_json, send_img)
+            return {
+                "data": out_dict,
+                "plot": send_img,
+                "success": True
+            }
         
-        return ">>{}$search$failed".format(identifier)
+        return {
+            "success": False
+        }
     
     def run(self):
         import utils.dan as dan
@@ -119,16 +132,24 @@ class Processor(Process):
 
         while True:
             identity, line = self.in_q.get()
-            line_split = line.split("$")
-            command, identifier, im_file = line_split[:3]
 
-            result = None
+            try:
+                query = json.loads(line)
+                command = query["cmd"]
 
-            if command == "process":
-                result = self.process(line_split)
-            elif command == "index":
-                result = self.index(line_split)
-            elif command == "search":
-                result = self.search(line_split)
-            
-            self.out_q.put([identity, result])
+                result = None
+
+                if command == "process":
+                    result = self.process(query)
+                elif command == "index":
+                    result = self.index(query)
+                elif command == "search":
+                    result = self.search(query)
+                
+                if result is not None:
+                    result["id"] = query["id"]
+                    result["cmd"] = command
+
+                    self.out_q.put([identity, json.dumps(result)])
+            except (json.decoder.JSONDecodeError, KeyError) as e:
+                pass
