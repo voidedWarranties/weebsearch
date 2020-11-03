@@ -8,7 +8,6 @@ import zmq
 import base64
 import commands as cmd
 import utils.plotting as plotting
-import json
 from operator import itemgetter
 
 project_dir = "dan-model"
