@@ -7,13 +7,17 @@ import signal
 import utils.fs as fs
 import utils.plotting as plotting
 import commands as cmd
+import schedule
+import utils.db as db
 
 # disable logs
 import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
 
 fs.ensure_dir("library")
-fs.ensure_dir("data")
+fs.ensure_dir("backups")
+
+schedule.every(2).hours.do(db.backup)
 
 # globals
 project_dir = "dan-model"

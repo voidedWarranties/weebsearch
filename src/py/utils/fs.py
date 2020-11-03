@@ -15,13 +15,3 @@ def iterate_library(files="library/*"):
 def ensure_dir(dir_path):
     if not path.exists(dir_path):
         os.makedirs(dir_path)
-
-# get file paths for image file
-def get_paths(file):
-    file = path.relpath(file, "library/")
-    name = ".".join(file.split(".")[:-1])
-
-    palette_path = "data/{}.colors.npy".format(name)
-    tags_path = "data/{}.tags.txt".format(name)
-
-    return palette_path, tags_path

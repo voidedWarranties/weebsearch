@@ -3,10 +3,22 @@
 import cv2 as cv
 import numpy as np
 from sklearn.cluster import MiniBatchKMeans
-import utils.fs as fs
-from os import path
 import random
 import string
+import six
+import utils.processing as proc
+from utils.db import Image
+
+# generate images suitable for dan and opencv
+# from a variable that could be a filepath or bytes
+def images_from(path_or_bytes):
+    if isinstance(path_or_bytes, str):
+        cv_img = cv.imread(path_or_bytes)
+        return cv_img, path_or_bytes
+
+    cv_img = proc.bytes_to_mat(path_or_bytes)
+    tf_img = six.BytesIO(path_or_bytes)
+    return cv_img, tf_img
 
 # generate a random string
 def rand_id(n=16):
@@ -67,13 +79,13 @@ def weight(diffs):
 # sort hits based on distance between palettes and
 # reference palette
 def color_sort(hits, palette):
+    paths = list(map(lambda h: h["path"], hits))
+    results = Image.select().where(Image.path.in_(paths))
+
     palettes = []
     
-    for hit in hits:
-        palette_path, _ = fs.get_paths(hit["path"])
-
-        if path.exists(palette_path):
-            palettes.append(np.load(palette_path))
+    for res in results:
+        palettes.append(res.colors)
     
     es_scores = list(map(lambda x: x["score"], hits))
     es_scores_norm = np.array(es_scores) / np.sum(es_scores)

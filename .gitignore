@@ -11,7 +11,8 @@ certs/*
 !certs/.gitkeep
 
 library/
-data/
+backups/
+images.db
 
 node_modules/
 

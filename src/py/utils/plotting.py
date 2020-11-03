@@ -58,11 +58,7 @@ def plt_to_png(fig):
 
 # plot results from cmd.search
 def plot(im_path, res, out_img=False):
-    cv_img = None
-    if isinstance(im_path, str):
-        cv_img = cv.imread(im_path)
-    else:
-        cv_img = proc.bytes_to_mat(im_path)
+    cv_img, _ = proc.images_from(im_path)
     
     _, palettes, _, _, palette, _, _ = res
     titles, texts, images = get_plot_data(res, cv_img)

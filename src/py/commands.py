@@ -1,22 +1,12 @@
 import utils.processing as proc
-import utils.fs as fs
-from os import path
 import numpy as np
 import cv2 as cv
-import six
 import elasticsearch
+from utils.db import Image
 
 # search image library
 def search(perf, es, evaluate, im_path, search_page=0):
-    cv_img = None
-    tf_img = None
-
-    if isinstance(im_path, str):
-        cv_img = cv.imread(im_path)
-        tf_img = im_path
-    else:
-        cv_img = proc.bytes_to_mat(im_path)
-        tf_img = six.BytesIO(im_path)
+    cv_img, tf_img = proc.images_from(im_path)
     
     if cv_img is None:
         return False
@@ -64,26 +54,25 @@ def search(perf, es, evaluate, im_path, search_page=0):
 
 # process an image file
 def process_file(evaluate, im_file):
-    palette_path, tags_path = fs.get_paths(im_file)
-
     img = cv.imread(im_file)
+
+    existing = Image.select().where(Image.path == im_file).count()
+
+    if existing > 0:
+        return False
 
     if img is None:
         return False
 
-    if not path.exists(palette_path):
-        palette = proc.palette_hist(img)
-        np.save(palette_path, palette)
+    palette = proc.palette_hist(img)
+    tags_out, rating = evaluate(im_file)
     
-    if not path.exists(tags_path):
-        tags_out, rating = evaluate(im_file)
-
-        out = " ".join(rating)
-        for tag in tags_out:
-            out += "\n" + " ".join(tag)
-        
-        with open(tags_path, "w") as f:
-            f.write(out)
+    Image.create(
+        id_=proc.rand_id(),
+        path=im_file,
+        colors=palette,
+        tags=np.append([rating], tags_out, axis=0)
+        )
     
     return True
 
@@ -126,26 +115,19 @@ def setup_elastic(es, clear):
 
 # index a file into elastic
 def index_file(es, im_file):
-    _, tags_path = fs.get_paths(im_file)
+    db_obj = None
 
-    if not path.exists(tags_path):
-        return
-
-    tags_out = []
-
-    with open(tags_path, "r") as f:
-        content = [x.strip() for x in f.readlines()]
-        
-        for line in content:
-            tag, confidence = line.split(" ")
-            tags_out.append(tag)
+    try:
+        db_obj = Image.select().where(Image.path == im_file)[0]
+    except IndexError as e:
+        return False
     
-    tb_id = proc.rand_id()
+    tags_out = list(map(lambda t: t[0], db_obj.tags))
     
     doc = {
         "path": im_file,
         "tags": tags_out,
-        "id": tb_id
+        "id": db_obj.id_
     }
 
     res = es.count(index="anime", body={
@@ -161,7 +143,7 @@ def index_file(es, im_file):
             index="anime",
             body=doc,
             pipeline="timestamp",
-            id=tb_id
+            id=db_obj.id_
         )
         return True
     
