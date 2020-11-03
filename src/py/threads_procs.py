@@ -42,9 +42,7 @@ class Processor(Process):
         self.in_q = Queue()
         self.out_q = Queue()
     
-    def process(self, query):
-        command, identifier, im_file = itemgetter("cmd", "id", "file")(query)
-
+    def process(self, im_file):
         im_file = path.relpath(im_file)
         success, msg = cmd.process_file(self.evaluate, im_file)
 
@@ -54,9 +52,7 @@ class Processor(Process):
             "msg": msg
         }
     
-    def index(self, query):
-        command, identifier, im_file = itemgetter("cmd", "id", "file")(query)
-
+    def index(self, im_file):
         im_file = path.relpath(im_file)
         indexed = cmd.index_file(self.es, im_file)
 
@@ -64,9 +60,7 @@ class Processor(Process):
             "indexed": indexed
         }
     
-    def search(self, query):
-        command, identifier, im_file = itemgetter("cmd", "id", "file")(query)
-
+    def search(self, im_file, query):
         perf = Performance(False)
 
         im_bytes = base64.b64decode(im_file)
@@ -135,15 +129,16 @@ class Processor(Process):
             try:
                 query = json.loads(line)
                 command = query["cmd"]
+                im_file = query["file"]
 
                 result = None
 
                 if command == "process":
-                    result = self.process(query)
+                    result = self.process(im_file)
                 elif command == "index":
-                    result = self.index(query)
+                    result = self.index(im_file)
                 elif command == "search":
-                    result = self.search(query)
+                    result = self.search(im_file, query)
                 
                 if result is not None:
                     result["id"] = query["id"]
