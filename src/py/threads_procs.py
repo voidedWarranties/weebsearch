@@ -9,6 +9,8 @@ import base64
 import commands as cmd
 import utils.plotting as plotting
 from operator import itemgetter
+import utils.db as db
+import schedule
 
 project_dir = "dan-model"
 
@@ -123,10 +125,14 @@ class Processor(Process):
         self.es = Elasticsearch()
         cmd.setup_elastic(self.es, False)
 
-        while True:
-            identity, line = self.in_q.get()
+        schedule.every(2).hours.do(db.backup)
 
+        while True:
             try:
+                schedule.run_pending()
+                
+                identity, line = self.in_q.get(block=False)
+
                 query = json.loads(line)
                 command = query["cmd"]
                 im_file = query["file"]
@@ -145,5 +151,5 @@ class Processor(Process):
                     result["cmd"] = command
 
                     self.out_q.put([identity, json.dumps(result)])
-            except (json.decoder.JSONDecodeError, KeyError) as e:
+            except (queue.Empty, json.decoder.JSONDecodeError, KeyError) as e:
                 pass
