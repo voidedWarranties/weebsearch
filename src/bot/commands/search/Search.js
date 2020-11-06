@@ -33,8 +33,10 @@ module.exports = class SearchCommand extends Command {
                     file: Buffer.from(plt, "base64"),
                     name: "out.png"
                 });
-            }).catch(() => {
-                return msg.channel.createMessage("Timed out");
+            }).catch(err => {
+                if (!err) {
+                    msg.channel.createMessage("Timed out");
+                }
             });
         });
     }

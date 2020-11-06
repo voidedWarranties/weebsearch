@@ -85,8 +85,10 @@ module.exports = class SearchRouter extends Router {
                     page,
                     startRank
                 });
-            }).catch(() => {
-                res.status(500);
+            }).catch(err => {
+                if (!err) {
+                    res.status(500);
+                }
             });
         });
     }
