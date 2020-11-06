@@ -3,14 +3,15 @@ import numpy as np
 import cv2 as cv
 import elasticsearch
 from utils.db import Image
+import os
 
 # search image library
 def search(perf, es, evaluate, im_path, search_page=0):
     cv_img, tf_img = proc.images_from(im_path)
-    
+
     if cv_img is None:
         return False
-    
+
     perf.begin_section("query image processing")
     palette = proc.palette_hist(cv_img)
     perf.end_section("query image processing")
@@ -58,7 +59,7 @@ def process_file(evaluate, im_file):
 
     if img is None:
         return False, "invalid"
-    
+
     existing = Image.select().where(Image.path == im_file).count()
 
     if existing > 0:
@@ -69,14 +70,14 @@ def process_file(evaluate, im_file):
 
     if rating[0] != "rating:safe":
         return False, "questionable"
-    
+
     Image.create(
         id_=proc.rand_id(),
         path=im_file,
         colors=palette,
         tags=np.append([rating], tags_out, axis=0)
         )
-    
+
     return True, "ok"
 
 # initialize elastic index
@@ -99,7 +100,7 @@ def setup_elastic(es, clear):
         }
 
         ingest.put_pipeline("timestamp", body=ingest_body)
-    
+
     index_body = {
         "mappings": {
             "properties": {
@@ -124,9 +125,9 @@ def index_file(es, im_file):
         db_obj = Image.select().where(Image.path == im_file)[0]
     except IndexError as e:
         return False
-    
+
     tags_out = list(map(lambda t: t[0], db_obj.tags))
-    
+
     doc = {
         "path": im_file,
         "tags": tags_out,
@@ -149,5 +150,15 @@ def index_file(es, im_file):
             id=db_obj.id_
         )
         return True
-    
+
     return False
+
+# delete a document
+def delete(es, id_):
+    id_ = int(id_)
+    query = Image.select().where(Image.id_ == id_)[0]
+    es.delete(index="anime", id=id_)
+    os.remove(query.path)
+
+    query.delete_instance()
+    return query.path

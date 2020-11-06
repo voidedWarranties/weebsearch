@@ -90,6 +90,20 @@ class IpcSocket extends EventEmitter {
         });
     }
 
+    delete(id, doc_id) {
+        return new Promise(async (resolve, reject) => {
+              const output = await this.sendAndWait("delete", id, {
+                  id_: doc_id
+              });
+
+              if (!output) {
+                  reject(null);
+              } else {
+                  resolve(output);
+              }
+        });
+    }
+
     sendAndWait(cmd, id, msg) {
         return new Promise(async resolve => {
             msg.cmd = cmd;

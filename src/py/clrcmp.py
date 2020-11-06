@@ -56,7 +56,7 @@ def handle_index(res):
 def handle_search(res):
     evaluate = setup_dan()
     es = setup_elastic()
-    
+
     im_path = res.image
     res = cmd.search(perf, es, evaluate, im_path)
 
@@ -81,6 +81,12 @@ def handle_zmq(res):
         msg = socket.recv_string()
         stdin_thread.in_q.put([identity, msg])
 
+def handle_delete(res):
+    es = setup_elastic()
+    del_path = cmd.delete(es, res.id)
+
+    print("Deleted", del_path)
+
 if __name__ == "__main__":
     # parse args
     parser = argparse.ArgumentParser()
@@ -96,6 +102,10 @@ if __name__ == "__main__":
     search_parser.add_argument("-i", "--image")
     search_parser.set_defaults(func=handle_search)
 
+    delete_parser = subs.add_parser("delete")
+    delete_parser.add_argument("-i", "--id")
+    delete_parser.set_defaults(func=handle_delete)
+
     zmq_parser = subs.add_parser("zmq")
     zmq_parser.set_defaults(func=handle_zmq)
 
@@ -106,4 +116,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     args.func(args)
-    

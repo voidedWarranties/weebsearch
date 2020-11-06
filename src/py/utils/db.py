@@ -13,10 +13,17 @@ def backup(path="images.db"):
         out_path = "backups/backup-{}.db".format(int(time.time()))
         shutil.copy(path, out_path)
 
+class IdField(pee.TextField):
+    def db_value(self, value):
+        return str(value)
+
+    def python_value(self, value):
+        return int(value)
+
 class ColorsField(pee.TextField):
     def db_value(self, value):
         return base64.b64encode(value).decode("utf-8")
-    
+
     def python_value(self, value):
         raw = base64.b64decode(value)
         arr = np.frombuffer(raw, dtype="float")
@@ -26,7 +33,7 @@ class TagsField(pee.TextField):
     def db_value(self, value):
         arr = [" ".join(tag) for tag in value]
         return "-".join(arr)
-    
+
     def python_value(self, value):
         arr = [tag.split(" ") for tag in value.split("-")]
         return arr
@@ -34,11 +41,11 @@ class TagsField(pee.TextField):
 class JsonField(pee.TextField):
     def db_value(self, value):
         return json.dumps(value)
-    
+
     def python_value(self, value):
         if value is None:
             return None
-        
+
         return json.loads(value)
 
 class BaseModel(pee.Model):
@@ -46,7 +53,7 @@ class BaseModel(pee.Model):
         database = db
 
 class Image(BaseModel):
-    id_ = pee.IntegerField(unique=True, primary_key=True)
+    id_ = IdField(unique=True, primary_key=True)
     path = pee.TextField(unique=True)
     colors = ColorsField()
     tags = TagsField()

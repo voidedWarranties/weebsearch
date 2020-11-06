@@ -22,7 +22,7 @@ def data_process(zipped):
         out["dist"] = dist
         out["w_score"] = w_score
         out_arr.append(out)
-    
+
     return out_arr
 
 class ResponseThread(Thread):
@@ -31,7 +31,7 @@ class ResponseThread(Thread):
 
         self.out_q = out_q
         self.sock = sock
-    
+
     def run(self):
         while True:
             identity, line = self.out_q.get()
@@ -43,7 +43,7 @@ class Processor(Process):
         super(Processor, self).__init__(daemon=True)
         self.in_q = Queue()
         self.out_q = Queue()
-    
+
     def process(self, im_file):
         im_file = path.relpath(im_file)
         success, msg = cmd.process_file(self.evaluate, im_file)
@@ -53,7 +53,7 @@ class Processor(Process):
             "success": success,
             "msg": msg
         }
-    
+
     def index(self, im_file):
         im_file = path.relpath(im_file)
         indexed = cmd.index_file(self.es, im_file)
@@ -61,7 +61,7 @@ class Processor(Process):
         return {
             "indexed": indexed
         }
-    
+
     def search(self, im_file, query):
         perf = Performance(False)
 
@@ -72,7 +72,7 @@ class Processor(Process):
             search_page = query["page"]
         except KeyError as e:
             pass
-        
+
         res = cmd.search(perf, self.es, self.evaluate, im_bytes, int(search_page))
 
         if res:
@@ -88,14 +88,14 @@ class Processor(Process):
                     should_plot = False
             except KeyError as e:
                 pass
-                
+
             plt_bytes = None
 
             if should_plot:
                 perf.begin_section("plotting")
                 plt_bytes = plotting.plot(im_bytes, res, True)
                 perf.end_section("plotting")
-            
+
             out_dict = {
                 "palette": palette.tolist(),
                 "query_tags": query_tags,
@@ -111,15 +111,28 @@ class Processor(Process):
                 "plot": send_img,
                 "success": True
             }
-        
+
         return {
             "success": False
         }
-    
+
+    def delete(self, query):
+        id_ = query["id_"]
+        try:
+            del_file = cmd.delete(self.es, id_)
+            return {
+                "success": True,
+                "file": del_file
+            }
+        except IndexError as e:
+            return {
+                "success": False
+            }
+
     def run(self):
         import utils.dan as dan
         from elasticsearch import Elasticsearch
-        
+
         self.evaluate = dan.setup_dan(project_dir)
 
         self.es = Elasticsearch()
@@ -130,12 +143,14 @@ class Processor(Process):
         while True:
             try:
                 schedule.run_pending()
-                
-                identity, line = self.in_q.get(block=False)
 
+                identity, line = self.in_q.get(block=False)
                 query = json.loads(line)
                 command = query["cmd"]
-                im_file = query["file"]
+
+                im_file = None
+                if "file" in query:
+                    im_file = query["file"]
 
                 result = None
 
@@ -145,7 +160,9 @@ class Processor(Process):
                     result = self.index(im_file)
                 elif command == "search":
                     result = self.search(im_file, query)
-                
+                elif command == "delete":
+                    result = self.delete(query)
+
                 if result is not None:
                     result["id"] = query["id"]
                     result["cmd"] = command
