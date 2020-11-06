@@ -20,23 +20,21 @@ module.exports = class SearchCommand extends Command {
         imageB64(url).then(async b64 => {
             if (!b64) return;
 
-            const output = await this.bot.sock.sendAndWait(id, { cmd: "search", id, file: b64 });
+            this.bot.sock.search(id, b64, 0, true).then(output => {
+                if (!output.success) {
+                    return msg.channel.createMessage("No results");
+                }
 
-            if (!output) {
+                const jsonOutput = output.data;
+
+                const plt = output.plot;
+
+                msg.channel.createMessage(`**performance**:\n${jsonOutput.performance}`, {
+                    file: Buffer.from(plt, "base64"),
+                    name: "out.png"
+                });
+            }).catch(() => {
                 return msg.channel.createMessage("Timed out");
-            }
-
-            if (!output.success) {
-                return msg.channel.createMessage("No results");
-            }
-
-            const jsonOutput = output.data;
-
-            const plt = output.plot;
-
-            await msg.channel.createMessage(`**performance**:\n${jsonOutput.performance}`, {
-                file: Buffer.from(plt, "base64"),
-                name: "out.png"
             });
         });
     }

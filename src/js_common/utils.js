@@ -6,11 +6,11 @@ const glob = require("glob");
 const zmq = require("zeromq");
 const { EventEmitter } = require("events");
 
-module.exports.randomString = () => {
+function randomString() {
     return Math.abs(crypto.randomBytes(5).readInt32LE()).toString(36);
 }
 
-module.exports.downloadImage = (url, filePath) => {
+function downloadImage(url, filePath) {
     return axios({
         method: "get",
         url,
@@ -27,7 +27,7 @@ module.exports.downloadImage = (url, filePath) => {
     });
 }
 
-module.exports.imageB64 = url => {
+function imageB64(url) {
     return axios({
         method: "get",
         url,
@@ -40,7 +40,7 @@ module.exports.imageB64 = url => {
     });
 }
 
-module.exports.IpcSocket = class IpcSocket extends EventEmitter {
+class IpcSocket extends EventEmitter {
     constructor() {
         super();
 
@@ -53,8 +53,47 @@ module.exports.IpcSocket = class IpcSocket extends EventEmitter {
         this.loop();
     }
 
-    sendAndWait(id, msg) {
+    index(id, filePath) {
+        return new Promise(async (resolve, reject) => {
+            const output = await this.sendAndWait("process", id, {
+                file: filePath
+            });
+
+            if (!output) {
+                reject(null);
+            }
+
+            if (!output.success) {
+                fs.unlinkSync(filePath);
+                reject(output.msg);
+            }
+
+            const output2 = await this.sendAndWait("index", id, {
+                file: filePath
+            });
+
+            resolve(output);
+        });
+    }
+
+    search(id, file, page = 0, plot = false) {
+        return new Promise(async (resolve, reject) => {
+            const output = await this.sendAndWait("search", id, {
+                file, page, plot
+            });
+
+            if (!output) {
+                reject(null);
+            } else {
+                resolve(output);
+            }
+        });
+    }
+
+    sendAndWait(cmd, id, msg) {
         return new Promise(async resolve => {
+            msg.cmd = cmd;
+            msg.id = id;
             await this.send(JSON.stringify(msg));
 
             const handler = async res => {
@@ -84,3 +123,5 @@ module.exports.IpcSocket = class IpcSocket extends EventEmitter {
         return this.socket.send(msg);
     }
 }
+
+module.exports = { randomString, downloadImage, imageB64, IpcSocket };
