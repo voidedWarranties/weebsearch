@@ -1,0 +1,8 @@
+mixin loginForm(action, route)
+    form(action=route method="post")
+        div
+            input(type="text" name="username" id="username" placeholder="Username")
+        div
+            input(type="password" name="password" id="password" placeholder="Password")
+
+        input(type="submit" value=action)

@@ -19,26 +19,26 @@ html(lang="en")
                 padding: 0 5px;
             }
 
-            .navlink a {
+            a {
                 color: white;
                 text-decoration: none;
             }
 
-            .navlink a:visited {
+            a:visited {
                 color: white;
             }
 
-            .navlink a:hover {
+            a:hover {
                 color: lightgray;
                 text-decoration: underline;
             }
     body
         .center
             h1(style="margin: 0;") weebsearch
-            ul(style="list-style-type: none; padding: 0;")
+            ul(style="margin: 0; list-style-type: none; padding: 0;")
                 li.navlink: a(href="/browse") Browse
-            
-            form(action="/search-image" method="POST" enctype="multipart/form-data" name="search-form")
+    
+            form(style="margin: 5px;" action="/search-image" method="POST" enctype="multipart/form-data" name="search-form")
                 label(for="query")
                     #upload(style="border: 3px dashed white;")
                         i Upload - Drag or Browse
@@ -46,8 +46,14 @@ html(lang="en")
                 br
                 input(type="submit" value="Search" name="search")
             
-            img(src="/counter/" + count height="100")
+            img(style="margin: 5px;" src="/counter/" + count height="100")
     
+            div
+                if user
+                    span Logged in as #{user.username}
+                    a(style="display: inline; padding-left: 10px;" href="/logout"): i Logout
+                else
+                    a(href="/login"): i Login
         script.
             const fileInput = document.getElementById("query");
             const dragContainer = document.getElementById("upload");
